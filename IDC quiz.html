@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Development Indicators Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16222b;
+    --panel:#1f2f3a;
+    --panel-edge:#3a5262;
+    --ink:#eef3f0;
+    --ink-dim:#9fb7c2;
+    --gold:#d9a441;
+    --gold-soft:#eabf72;
+    --correct:#5fa777;
+    --wrong:#c85a4a;
+    --option-bg:#28404d;
+    --option-bg-hover:#325161;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    background-image:radial-gradient(circle at 15% 10%, rgba(217,164,65,0.07), transparent 45%),
+                      radial-gradient(circle at 88% 85%, rgba(95,167,119,0.08), transparent 40%);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px 48px;
+  }
+
+  .wrap{ width:100%; max-width:680px; }
+
+  header{ text-align:center; margin-bottom:22px; }
+  header h1{
+    font-family:'Space Grotesk','Segoe UI',sans-serif;
+    font-size:clamp(1.6rem,3.6vw,2.2rem);
+    font-weight:700;
+    color:var(--gold-soft);
+    margin:0 0 6px;
+  }
+  header p{
+    color:var(--ink-dim);
+    font-size:0.92rem;
+    margin:0;
+    line-height:1.5;
+  }
+
+  .stage-track{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:26px;
+    flex-wrap:wrap;
+  }
+  .stage-dot{
+    padding:6px 14px;
+    border-radius:999px;
+    border:1px solid var(--panel-edge);
+    font-size:0.75rem;
+    color:var(--ink-dim);
+    background:var(--panel);
+  }
+  .stage-dot.active{ border-color:var(--gold); color:var(--gold-soft); }
+  .stage-dot.done{ border-color:var(--correct); color:var(--correct); }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:14px;
+    padding:32px 30px;
+  }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    background:var(--gold);
+    color:#182228;
+    border:none;
+    padding:12px 26px;
+    border-radius:10px;
+    font-size:0.95rem;
+    cursor:pointer;
+    transition:transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover{ background:var(--gold-soft); transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0); }
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--panel-edge);
+  }
+  .btn.secondary:hover{ border-color:var(--gold); color:var(--gold-soft); }
+
+  .center{ text-align:center; }
+
+  /* Menu */
+  .menu-list{ display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+  .menu-option{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:4px;
+    text-align:left;
+    width:100%;
+    background:var(--option-bg);
+    border:1px solid var(--panel-edge);
+    color:var(--ink);
+    padding:16px 18px;
+    border-radius:12px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    transition:background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  }
+  .menu-option:hover{ background:var(--option-bg-hover); border-color:var(--gold); transform:translateY(-1px); }
+  .menu-option.primary{ background:var(--gold); color:#182228; border-color:var(--gold); }
+  .menu-option.primary:hover{ background:var(--gold-soft); }
+  .menu-option.primary .menu-option-desc{ color:#3d2f10; }
+  .menu-option-title{ font-family:'Space Grotesk','Segoe UI',sans-serif; font-weight:600; font-size:1.05rem; }
+  .menu-option-desc{ font-size:0.82rem; color:var(--ink-dim); }
+
+  /* Level header */
+  .level-header-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:4px; }
+  .level-header-row .level-heading{ margin-bottom:0; }
+  .menu-link{
+    background:none; border:none; color:var(--ink-dim); font-size:0.78rem;
+    cursor:pointer; text-decoration:underline; padding:0; font-family:'Inter',sans-serif; white-space:nowrap;
+  }
+  .menu-link:hover{ color:var(--gold-soft); }
+  .level-heading{
+    font-family:'Space Grotesk','Segoe UI',sans-serif;
+    font-size:1.25rem;
+    font-weight:600;
+    color:var(--gold-soft);
+    margin:0 0 4px;
+  }
+  .level-sub{ color:var(--ink-dim); font-size:0.85rem; margin:0 0 20px; }
+
+  .item-progress{ font-size:0.78rem; color:var(--ink-dim); text-align:right; margin-bottom:6px; }
+  .progress-track{ height:5px; background:#101a20; border-radius:3px; overflow:hidden; margin-bottom:22px; }
+  .progress-fill{ height:100%; background:var(--gold); width:0%; transition:width 0.35s ease; }
+
+  /* MC prompt + choices */
+  .prompt-box{
+    background:#101a20;
+    border:1px solid var(--panel-edge);
+    border-radius:10px;
+    padding:18px 20px;
+    margin-bottom:20px;
+    font-size:1.1rem;
+    line-height:1.5;
+  }
+  .prompt-box.term{
+    font-family:'Space Grotesk','Segoe UI',sans-serif;
+    font-weight:600;
+    font-size:1.3rem;
+    color:var(--gold-soft);
+    text-align:center;
+  }
+  .choice-stack{ display:flex; flex-direction:column; gap:10px; }
+  .choice-btn{
+    font-family:'Inter',sans-serif;
+    background:var(--option-bg);
+    border:1px solid var(--panel-edge);
+    color:var(--ink);
+    padding:13px 16px;
+    border-radius:10px;
+    font-size:0.95rem;
+    line-height:1.4;
+    text-align:left;
+    cursor:pointer;
+    transition:background 0.12s ease, border-color 0.12s ease;
+  }
+  .choice-btn:hover{ background:var(--option-bg-hover); border-color:var(--gold); }
+  .choice-btn.correct-flash{ background:var(--correct); color:#0f1f16; border-color:var(--correct); }
+  .choice-btn.wrong-flash{ background:var(--wrong); color:#2b1310; border-color:var(--wrong); }
+  .feedback-box{ min-height:22px; font-size:0.88rem; margin-top:12px; }
+  .feedback-box.correct{ color:var(--correct); }
+  .feedback-box.wrong{ color:var(--wrong); }
+
+  /* Matching level */
+  .match-instructions{ color:var(--ink-dim); font-size:0.85rem; margin-bottom:18px; }
+  .match-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .match-col-label{
+    font-family:'Space Grotesk','Segoe UI',sans-serif;
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  .match-item{
+    display:block;
+    width:100%;
+    background:var(--option-bg);
+    border:1px solid var(--panel-edge);
+    color:var(--ink);
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:0.85rem;
+    line-height:1.35;
+    text-align:left;
+    cursor:pointer;
+    margin-bottom:8px;
+    transition:background 0.12s ease, border-color 0.12s ease;
+  }
+  .match-item:hover{ background:var(--option-bg-hover); }
+  .match-item.selected{ border-color:var(--gold); background:var(--option-bg-hover); }
+  .match-item.matched{ background:var(--correct); color:#0f1f16; border-color:var(--correct); cursor:default; }
+  .match-item.wrong-flash{ background:var(--wrong); color:#2b1310; border-color:var(--wrong); }
+  .match-status{ text-align:center; font-size:0.85rem; color:var(--ink-dim); margin-top:16px; }
+
+  /* Summary */
+  .summary-stats{ display:flex; justify-content:space-around; margin:20px 0 24px; text-align:center; flex-wrap:wrap; gap:14px; }
+  .summary-stat-value{ font-family:'Space Grotesk','Segoe UI',sans-serif; font-size:1.6rem; color:var(--gold-soft); font-weight:700; }
+  .summary-stat-label{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); margin-top:2px; }
+  .review-list{
+    background:#101a20; border:1px solid var(--panel-edge); border-radius:10px;
+    padding:14px 18px; margin-bottom:22px; font-size:0.88rem; color:var(--ink-dim);
+  }
+  .review-list strong{ color:var(--ink); }
+  .summary-buttons{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+
+  @media (max-width:560px){
+    .match-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Development Indicators Quiz</h1>
+    <p>GDP, HDI, inequality measures, and wellbeing indices. Fourteen terms, three ways to test yourself.</p>
+  </header>
+
+  <div class="stage-track" id="stageTrack" style="display:none;">
+    <div class="stage-dot" data-stage="0">Term &rarr; Definition</div>
+    <div class="stage-dot" data-stage="1">Definition &rarr; Term</div>
+    <div class="stage-dot" data-stage="2">Matching</div>
+  </div>
+
+  <div class="card">
+
+    <div class="screen active" id="menu">
+      <div class="level-heading">Choose what to work on</div>
+      <div class="level-sub">Play all three in order, or jump straight to one.</div>
+
+      <div class="menu-list">
+        <button class="menu-option primary" id="btnPlayAll">
+          <span class="menu-option-title">All three challenges</span>
+          <span class="menu-option-desc">Term to definition, then definition to term, then matching.</span>
+        </button>
+        <button class="menu-option" id="btnPlayMC1">
+          <span class="menu-option-title">Term &rarr; Definition</span>
+          <span class="menu-option-desc">See a term, pick the definition that matches it.</span>
+        </button>
+        <button class="menu-option" id="btnPlayMC2">
+          <span class="menu-option-title">Definition &rarr; Term</span>
+          <span class="menu-option-desc">See a definition, pick the term it describes.</span>
+        </button>
+        <button class="menu-option" id="btnPlayMatch">
+          <span class="menu-option-title">Matching</span>
+          <span class="menu-option-desc">Click a term, then click its matching definition, for all fourteen.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="screen" id="mc1">
+      <div class="level-header-row">
+        <div class="level-heading">Term &rarr; Definition</div>
+        <button class="menu-link" id="menuBtnMc1">Back to menu</button>
+      </div>
+      <div class="level-sub">Read the term, then choose the definition that matches it.</div>
+      <div class="item-progress" id="mc1Progress">Term 1 of 14</div>
+      <div class="progress-track"><div class="progress-fill" id="mc1ProgressFill"></div></div>
+
+      <div class="prompt-box term" id="mc1Prompt"></div>
+      <div class="choice-stack" id="mc1Choices"></div>
+      <div class="feedback-box" id="mc1Feedback"></div>
+    </div>
+
+    <div class="screen" id="mc2">
+      <div class="level-header-row">
+        <div class="level-heading">Definition &rarr; Term</div>
+        <button class="menu-link" id="menuBtnMc2">Back to menu</button>
+      </div>
+      <div class="level-sub">Read the definition, then choose the term it describes.</div>
+      <div class="item-progress" id="mc2Progress">Definition 1 of 14</div>
+      <div class="progress-track"><div class="progress-fill" id="mc2ProgressFill"></div></div>
+
+      <div class="prompt-box" id="mc2Prompt"></div>
+      <div class="choice-stack" id="mc2Choices"></div>
+      <div class="feedback-box" id="mc2Feedback"></div>
+    </div>
+
+    <div class="screen" id="match">
+      <div class="level-header-row">
+        <div class="level-heading">Matching</div>
+        <button class="menu-link" id="menuBtnMatch">Back to menu</button>
+      </div>
+      <div class="match-instructions">Click a term on the left, then click its definition on the right. Matched pairs turn green.</div>
+
+      <div class="match-grid">
+        <div>
+          <div class="match-col-label">Terms</div>
+          <div id="matchTerms"></div>
+        </div>
+        <div>
+          <div class="match-col-label">Definitions</div>
+          <div id="matchDefs"></div>
+        </div>
+      </div>
+      <div class="match-status" id="matchStatus">Matched 0 of 14</div>
+    </div>
+
+    <div class="screen" id="summary">
+      <div class="level-heading" id="summaryHeading">Quiz complete</div>
+      <div class="level-sub" id="summarySub">Here's how it went.</div>
+
+      <div class="summary-stats">
+        <div id="sumMc1Block">
+          <div class="summary-stat-value" id="sumMc1First">0/14</div>
+          <div class="summary-stat-label">Term &rarr; Def<br>first try</div>
+        </div>
+        <div id="sumMc2Block">
+          <div class="summary-stat-value" id="sumMc2First">0/14</div>
+          <div class="summary-stat-label">Def &rarr; Term<br>first try</div>
+        </div>
+        <div id="sumMatchBlock">
+          <div class="summary-stat-value" id="sumMatchMisses">0</div>
+          <div class="summary-stat-label">Matching<br>misses</div>
+        </div>
+      </div>
+
+      <div class="review-list" id="reviewList" style="display:none;"></div>
+
+      <div class="summary-buttons">
+        <button class="btn" id="restartBtn">Play again</button>
+        <button class="btn secondary" id="menuBtnSummary">Back to menu</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+
+  var TERMS = [
+    { id:"gdp", term:"GDP (Gross Domestic Product)",
+      def:"The total monetary value of all finished goods and services produced within a country's borders in a given year." },
+    { id:"gdp_capita", term:"GDP per Capita",
+      def:"A country's GDP divided by its population, showing the average economic output per person." },
+    { id:"ppp", term:"PPP (Purchasing Power Parity)",
+      def:"An adjustment that compares currencies based on what the same basket of goods and services would cost in each country, accounting for differences in cost of living." },
+    { id:"gni", term:"GNI (Gross National Income)",
+      def:"The total income earned by a country's residents and businesses both at home and abroad, minus income earned domestically by foreign residents." },
+    { id:"hdi", term:"HDI (Human Development Index)",
+      def:"A composite score combining life expectancy, education, and income per capita to rank a country's overall level of development." },
+    { id:"resource_curse", term:"Resource Curse",
+      def:"The tendency for countries rich in natural resources like oil or minerals to experience slower growth, weaker governance, and more conflict than resource-poor countries." },
+    { id:"gini", term:"Gini Coefficient",
+      def:"A statistical measure of income or wealth inequality within a population, scored from 0, perfect equality, to 1, perfect inequality." },
+    { id:"quintile_ratio", term:"Quintile Ratio",
+      def:"A measure of inequality that compares the income or wealth of the richest 20 percent of a population to that of the poorest 20 percent." },
+    { id:"gii", term:"Gender Inequality Index (GII)",
+      def:"A composite measure of inequality between men and women across reproductive health, empowerment, and participation in the labour market." },
+    { id:"ihdi", term:"IHDI (Inequality-adjusted HDI)",
+      def:"The Human Development Index adjusted downward to reflect how unevenly health, education, and income are distributed within a country." },
+    { id:"phdi", term:"PHDI (Planetary pressures-adjusted HDI)",
+      def:"The Human Development Index adjusted downward based on a country's carbon emissions and material footprint, reflecting environmental sustainability." },
+    { id:"nir", term:"Natural Increase Rate",
+      def:"The rate of population growth found by subtracting the death rate from the birth rate, not counting migration." },
+    { id:"cantril", term:"Cantril Ladder",
+      def:"A survey tool that asks people to rate their own life on a scale from 0 to 10, imagining the best and worst possible lives as the top and bottom rungs." },
+    { id:"hpi", term:"HPI (Happy Planet Index)",
+      def:"A measure that combines wellbeing, life expectancy, and inequality with ecological footprint to show how efficiently countries turn resources into long, happy lives." }
+  ];
+
+  var DISTRACTORS = {
+    gdp: ["gni","gdp_capita","ppp"],
+    gdp_capita: ["gdp","gni","ppp"],
+    ppp: ["gdp","gdp_capita","gni"],
+    gni: ["gdp","gdp_capita","ppp"],
+    hdi: ["ihdi","phdi","gii"],
+    resource_curse: ["gni","gini","nir"],
+    gini: ["quintile_ratio","gii","ihdi"],
+    quintile_ratio: ["gini","gii","ihdi"],
+    gii: ["hdi","gini","ihdi"],
+    ihdi: ["hdi","phdi","gini"],
+    phdi: ["hdi","ihdi","hpi"],
+    nir: ["cantril","resource_curse","gdp_capita"],
+    cantril: ["hpi","nir","gii"],
+    hpi: ["phdi","cantril","ihdi"]
+  };
+
+  var byId = {};
+  TERMS.forEach(function(t){ byId[t.id] = t; });
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  // ---------- Screen management ----------
+  var screens = document.querySelectorAll('.screen');
+  var stageDots = document.querySelectorAll('.stage-dot');
+  var stageTrackEl = document.getElementById('stageTrack');
+  function showScreen(id){
+    screens.forEach(function(s){ s.classList.toggle('active', s.id === id); });
+  }
+  function setStage(stageIndex){
+    stageDots.forEach(function(d, i){
+      d.classList.toggle('active', i === stageIndex);
+      d.classList.toggle('done', i < stageIndex);
+    });
+  }
+
+  var mode = 'all'; // 'all' | 'mc1' | 'mc2' | 'match'
+
+  function goToMenu(){
+    stageTrackEl.style.display = 'none';
+    stageDots.forEach(function(d){ d.classList.remove('active','done'); });
+    showScreen('menu');
+  }
+
+  var results = {
+    mc1First: 0, mc1Missed: [],
+    mc2First: 0, mc2Missed: [],
+    matchMisses: 0
+  };
+
+  function afterMc1(){ if (mode === 'all') startMc2(); else showSummary(); }
+  function afterMc2(){ if (mode === 'all') startMatch(); else showSummary(); }
+
+  // ================= MC1: Term -> Definition =================
+  var mc1Order = [];
+  var mc1Index = 0;
+  var mc1Missed = false;
+
+  var mc1ProgressEl = document.getElementById('mc1Progress');
+  var mc1ProgressFill = document.getElementById('mc1ProgressFill');
+  var mc1PromptEl = document.getElementById('mc1Prompt');
+  var mc1ChoicesEl = document.getElementById('mc1Choices');
+  var mc1FeedbackEl = document.getElementById('mc1Feedback');
+
+  function startMc1(){
+    mc1Order = shuffle(TERMS);
+    mc1Index = 0;
+    results.mc1First = 0;
+    results.mc1Missed = [];
+    stageTrackEl.style.display = (mode === 'all') ? 'flex' : 'none';
+    setStage(0);
+    showScreen('mc1');
+    loadMc1();
+  }
+
+  function loadMc1(){
+    mc1Missed = false;
+    mc1FeedbackEl.textContent = '';
+    mc1FeedbackEl.className = 'feedback-box';
+    var t = mc1Order[mc1Index];
+    mc1ProgressEl.textContent = 'Term ' + (mc1Index + 1) + ' of ' + mc1Order.length;
+    mc1ProgressFill.style.width = (mc1Index / mc1Order.length * 100) + '%';
+    mc1PromptEl.textContent = t.term;
+
+    var distractorIds = DISTRACTORS[t.id] || [];
+    var options = shuffle([t.id].concat(distractorIds));
+    mc1ChoicesEl.innerHTML = '';
+    options.forEach(function(oid){
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = byId[oid].def;
+      btn.addEventListener('click', function(){ handleMc1Choice(btn, oid, t.id); });
+      mc1ChoicesEl.appendChild(btn);
+    });
+  }
+
+  function handleMc1Choice(btn, chosenId, correctId){
+    if (btn.classList.contains('correct-flash')) return;
+    if (chosenId === correctId){
+      btn.classList.add('correct-flash');
+      mc1FeedbackEl.textContent = 'Correct.';
+      mc1FeedbackEl.className = 'feedback-box correct';
+      if (!mc1Missed) results.mc1First++;
+      var allBtns = mc1ChoicesEl.querySelectorAll('.choice-btn');
+      allBtns.forEach(function(b){ b.disabled = true; });
+      window.setTimeout(function(){
+        mc1Index++;
+        if (mc1Index >= mc1Order.length){ afterMc1(); } else { loadMc1(); }
+      }, 850);
+    } else {
+      mc1Missed = true;
+      results.mc1Missed.push(byId[correctId].term);
+      btn.classList.add('wrong-flash');
+      mc1FeedbackEl.textContent = 'Not quite, try again.';
+      mc1FeedbackEl.className = 'feedback-box wrong';
+      window.setTimeout(function(){ btn.classList.remove('wrong-flash'); }, 450);
+    }
+  }
+
+  // ================= MC2: Definition -> Term =================
+  var mc2Order = [];
+  var mc2Index = 0;
+  var mc2Missed = false;
+
+  var mc2ProgressEl = document.getElementById('mc2Progress');
+  var mc2ProgressFill = document.getElementById('mc2ProgressFill');
+  var mc2PromptEl = document.getElementById('mc2Prompt');
+  var mc2ChoicesEl = document.getElementById('mc2Choices');
+  var mc2FeedbackEl = document.getElementById('mc2Feedback');
+
+  function startMc2(){
+    mc2Order = shuffle(TERMS);
+    mc2Index = 0;
+    results.mc2First = 0;
+    results.mc2Missed = [];
+    stageTrackEl.style.display = (mode === 'all') ? 'flex' : 'none';
+    setStage(1);
+    showScreen('mc2');
+    loadMc2();
+  }
+
+  function loadMc2(){
+    mc2Missed = false;
+    mc2FeedbackEl.textContent = '';
+    mc2FeedbackEl.className = 'feedback-box';
+    var t = mc2Order[mc2Index];
+    mc2ProgressEl.textContent = 'Definition ' + (mc2Index + 1) + ' of ' + mc2Order.length;
+    mc2ProgressFill.style.width = (mc2Index / mc2Order.length * 100) + '%';
+    mc2PromptEl.textContent = t.def;
+
+    var distractorIds = DISTRACTORS[t.id] || [];
+    var options = shuffle([t.id].concat(distractorIds));
+    mc2ChoicesEl.innerHTML = '';
+    options.forEach(function(oid){
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = byId[oid].term;
+      btn.addEventListener('click', function(){ handleMc2Choice(btn, oid, t.id); });
+      mc2ChoicesEl.appendChild(btn);
+    });
+  }
+
+  function handleMc2Choice(btn, chosenId, correctId){
+    if (btn.classList.contains('correct-flash')) return;
+    if (chosenId === correctId){
+      btn.classList.add('correct-flash');
+      mc2FeedbackEl.textContent = 'Correct.';
+      mc2FeedbackEl.className = 'feedback-box correct';
+      if (!mc2Missed) results.mc2First++;
+      var allBtns = mc2ChoicesEl.querySelectorAll('.choice-btn');
+      allBtns.forEach(function(b){ b.disabled = true; });
+      window.setTimeout(function(){
+        mc2Index++;
+        if (mc2Index >= mc2Order.length){ afterMc2(); } else { loadMc2(); }
+      }, 850);
+    } else {
+      mc2Missed = true;
+      results.mc2Missed.push(byId[correctId].term);
+      btn.classList.add('wrong-flash');
+      mc2FeedbackEl.textContent = 'Not quite, try again.';
+      mc2FeedbackEl.className = 'feedback-box wrong';
+      window.setTimeout(function(){ btn.classList.remove('wrong-flash'); }, 450);
+    }
+  }
+
+  // ================= Matching =================
+  var matchTermsEl = document.getElementById('matchTerms');
+  var matchDefsEl = document.getElementById('matchDefs');
+  var matchStatusEl = document.getElementById('matchStatus');
+  var selTerm = null;
+  var selDef = null;
+  var matchedCount = 0;
+
+  function startMatch(){
+    results.matchMisses = 0;
+    matchedCount = 0;
+    selTerm = null;
+    selDef = null;
+    stageTrackEl.style.display = (mode === 'all') ? 'flex' : 'none';
+    setStage(2);
+    showScreen('match');
+
+    var termOrder = shuffle(TERMS);
+    var defOrder = shuffle(TERMS);
+
+    matchTermsEl.innerHTML = '';
+    termOrder.forEach(function(t){
+      var el = document.createElement('button');
+      el.className = 'match-item';
+      el.textContent = t.term;
+      el.dataset.id = t.id;
+      el.addEventListener('click', function(){ handleMatchClick(el, 'term'); });
+      matchTermsEl.appendChild(el);
+    });
+
+    matchDefsEl.innerHTML = '';
+    defOrder.forEach(function(t){
+      var el = document.createElement('button');
+      el.className = 'match-item';
+      el.textContent = t.def;
+      el.dataset.id = t.id;
+      el.addEventListener('click', function(){ handleMatchClick(el, 'def'); });
+      matchDefsEl.appendChild(el);
+    });
+
+    matchStatusEl.textContent = 'Matched 0 of ' + TERMS.length;
+  }
+
+  function handleMatchClick(el, side){
+    if (el.classList.contains('matched')) return;
+
+    if (side === 'term'){
+      if (selTerm) selTerm.classList.remove('selected');
+      selTerm = el;
+      el.classList.add('selected');
+    } else {
+      if (selDef) selDef.classList.remove('selected');
+      selDef = el;
+      el.classList.add('selected');
+    }
+
+    if (selTerm && selDef){
+      var t = selTerm, d = selDef;
+      if (t.dataset.id === d.dataset.id){
+        t.classList.remove('selected'); d.classList.remove('selected');
+        t.classList.add('matched'); d.classList.add('matched');
+        matchedCount++;
+        matchStatusEl.textContent = 'Matched ' + matchedCount + ' of ' + TERMS.length;
+        selTerm = null; selDef = null;
+        if (matchedCount >= TERMS.length){
+          window.setTimeout(function(){ showSummary(); }, 700);
+        }
+      } else {
+        results.matchMisses++;
+        t.classList.add('wrong-flash'); d.classList.add('wrong-flash');
+        window.setTimeout(function(){
+          t.classList.remove('wrong-flash','selected');
+          d.classList.remove('wrong-flash','selected');
+        }, 450);
+        selTerm = null; selDef = null;
+      }
+    }
+  }
+
+  // ================= Summary =================
+  var summaryHeading = document.getElementById('summaryHeading');
+  var summarySub = document.getElementById('summarySub');
+  var sumMc1Block = document.getElementById('sumMc1Block');
+  var sumMc2Block = document.getElementById('sumMc2Block');
+  var sumMatchBlock = document.getElementById('sumMatchBlock');
+
+  function showSummary(){
+    if (mode === 'all'){
+      setStage(3);
+      summaryHeading.textContent = 'Quiz complete';
+      summarySub.textContent = "Here's how it went.";
+      sumMc1Block.style.display = '';
+      sumMc2Block.style.display = '';
+      sumMatchBlock.style.display = '';
+    } else {
+      stageTrackEl.style.display = 'none';
+      var labels = { mc1:'Term \u2192 Definition', mc2:'Definition \u2192 Term', match:'Matching' };
+      summaryHeading.textContent = labels[mode] + ' complete';
+      summarySub.textContent = "Here's how it went.";
+      sumMc1Block.style.display = (mode === 'mc1') ? '' : 'none';
+      sumMc2Block.style.display = (mode === 'mc2') ? '' : 'none';
+      sumMatchBlock.style.display = (mode === 'match') ? '' : 'none';
+    }
+
+    document.getElementById('sumMc1First').textContent = results.mc1First + '/14';
+    document.getElementById('sumMc2First').textContent = results.mc2First + '/14';
+    document.getElementById('sumMatchMisses').textContent = results.matchMisses;
+
+    var reviewList = document.getElementById('reviewList');
+    var reviewItems = [];
+    if (mode === 'all' || mode === 'mc1') reviewItems = reviewItems.concat(results.mc1Missed);
+    if (mode === 'all' || mode === 'mc2') reviewItems = reviewItems.concat(results.mc2Missed);
+    reviewItems = reviewItems.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+    if (reviewItems.length){
+      reviewList.style.display = 'block';
+      reviewList.innerHTML = '<strong>Worth another look:</strong> ' + reviewItems.join(', ');
+    } else {
+      reviewList.style.display = 'none';
+    }
+    showScreen('summary');
+  }
+
+  function restartCurrentMode(){
+    if (mode === 'all' || mode === 'mc1') startMc1();
+    else if (mode === 'mc2') startMc2();
+    else if (mode === 'match') startMatch();
+  }
+
+  // ================= Init =================
+  document.getElementById('btnPlayAll').addEventListener('click', function(){ mode = 'all'; startMc1(); });
+  document.getElementById('btnPlayMC1').addEventListener('click', function(){ mode = 'mc1'; startMc1(); });
+  document.getElementById('btnPlayMC2').addEventListener('click', function(){ mode = 'mc2'; startMc2(); });
+  document.getElementById('btnPlayMatch').addEventListener('click', function(){ mode = 'match'; startMatch(); });
+
+  document.getElementById('menuBtnMc1').addEventListener('click', goToMenu);
+  document.getElementById('menuBtnMc2').addEventListener('click', goToMenu);
+  document.getElementById('menuBtnMatch').addEventListener('click', goToMenu);
+  document.getElementById('menuBtnSummary').addEventListener('click', goToMenu);
+
+  document.getElementById('restartBtn').addEventListener('click', restartCurrentMode);
+
+})();
+</script>
+</body>
+</html>
